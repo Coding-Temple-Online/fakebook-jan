@@ -3,18 +3,19 @@ from flask_login import current_user
 from app.blueprints.shop.models import Cart, Product
 from functools import reduce
 
+
 @app.context_processor
 def display_cart_info():
-    if not current_user.is_authenticated:
+    if not current_user.is_authenticated or not Cart.query.all():
         return {
-                'cart': {
-                    'items': [],
-                    'display_cart': [],
-                    'tax': float(0.00),
-                    'subtotal': float(0.00),
-                    'grand_total': float(0.00),
-                } 
+            'cart': {
+                'items': [],
+                'display_cart': [],
+                'tax': float(0.00),
+                'subtotal': float(0.00),
+                'grand_total': float(0.00),
             }
+        }
     else:
         cart_list = {}
         cart = Cart.query.filter_by(user_id=current_user.id).all()
@@ -33,12 +34,13 @@ def display_cart_info():
                     }
                 else:
                     cart_list[p.id]['quantity'] += 1
+        print(cart_list)
         return {
-                'cart': {
-                    'items': cart,
-                    'display_cart': cart_list.values(),
-                    'tax': round(reduce(lambda x,y:x+y, [i['tax'] for i in cart_list.values()]), 2),
-                    'subtotal': round(reduce(lambda x,y:x+y, [i['price'] for i in cart_list.values()]), 2),
-                    'grand_total': round(reduce(lambda x,y:x+y, [i['price'] + i['tax'] for i in cart_list.values()]), 2),
-                } 
+            'cart': {
+                'items': cart,
+                'display_cart': cart_list.values(),
+                'tax': round(reduce(lambda x, y: x+y, [i['tax'] for i in cart_list.values()]), 2),
+                'subtotal': round(reduce(lambda x, y: x+y, [i['price'] for i in cart_list.values()]), 2),
+                'grand_total': round(reduce(lambda x, y: x+y, [i['price'] + i['tax'] for i in cart_list.values()]), 2),
             }
+        }
