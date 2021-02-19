@@ -28,15 +28,26 @@
                         <tr>
                             <td>{{ p['name'] }}</td>
                             <td>{{ p['description'] }}</td>
-                            <td>{{ p['price'] }}</td>
-                            <td>{{ p['quantity'] }}</td>
+                            <td>{{ '${:.2f}'.format(p['price']) }}</td>
+                            <td>
+                                <form action="{{ url_for('shop.update_cart', id=p['id']) }}">
+                                    <input type="hidden" name="product_id" value="{{ p['product_id'] }}">
+                                    <div class="form-row">
+                                        <div class="col-md-4">
+                                            <input type="number" min="0" max="99" class="form-control" name="quantity" value="{{ p['quantity'] }}" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="submit" class="btn btn-info" value="Update" />
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
                             <td>
                                 <a href="{{ url_for('shop.delete_product', product_id=p.product_id) }}" class="btn btn-danger">
                                     Delete 
                                     <span>
                                         <i class="fa fa-trash"></i>
                                     </span>
-                                    <!-- <i class="fas fa-trash-alt    "></i> -->
                                 </a>
                             </td>
                         </tr>
@@ -44,28 +55,28 @@
                         <tr>
                             <td colspan="3"></td>
                             <td>
-                                <strong>Subtotal</strong>
+                                <strong class="float-right">Subtotal</strong>
                             </td>
                             <td>
-                                <strong>${{ '{:.2f}'.format(cart['subtotal']) }}</strong>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="3"></td>
-                            <td>
-                                <strong>Tax</strong>
-                            </td>
-                            <td>
-                                <strong>${{ '{:.2f}'.format(cart['tax']) }}</strong>
+                                <strong>{{ '${:.2f}'.format(cart['subtotal']) }}</strong>
                             </td>
                         </tr>
                         <tr>
                             <td colspan="3"></td>
                             <td>
-                                <strong>Grand Total</strong>
+                                <strong class="float-right">Tax</strong>
                             </td>
                             <td>
-                                <strong>${{ '{:.2f}'.format(cart['grand_total']) }}</strong>
+                                <strong>{{ '${:.2f}'.format(cart['tax']) }}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"></td>
+                            <td>
+                                <strong class="float-right">Grand Total</strong>
+                            </td>
+                            <td>
+                                <strong>{{ '${:.2f}'.format(cart['grand_total']) }}</strong>
                             </td>
                         </tr>
                         <tr>

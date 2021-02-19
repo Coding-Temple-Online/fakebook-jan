@@ -30,7 +30,7 @@
                             <span class="badge badge-secondary bg-lg">{{ cart['items']|length }}</span>
                         </span>
                     </a>
-                    <a class="dropdown-item" href="#">Checkout</a>
+                    <a class="dropdown-item" href="{{ url_for('shop.checkout') }}">Checkout</a>
                 </div>
             </li>
             {% endif %}
