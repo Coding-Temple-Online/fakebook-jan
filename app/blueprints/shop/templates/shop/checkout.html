@@ -12,4 +12,41 @@
 {% block body %}
     <h3>Checkout</h3>
     <hr />
+    <form id='checkout_form'>
+      <input type="submit" class="btn btn-primary" value='Pay' />
+    </form>
 {% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <script type="text/javascript">
+      // Create an instance of the Stripe object with your publishable API key
+      var pk_test = '{{ stripe_pk_test }}';
+      var stripe = Stripe(pk_test);
+      console.log(stripe);
+
+      $('#checkout_form').on('submit', function() {
+        fetch('{{ url_for("shop.checkout") }}', {
+          method: 'POST'
+        })
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(session) {
+          return stripe.redirectToCheckout({ session_id: session.id })
+        })
+        .then(function(result) {
+          console.log(result);
+
+          if (result.error) {
+            console.error(result.error.message);
+          }
+        })
+        .catch(function(error) {
+          console.erro('Error:', error);
+        })
+      })
+    </script>
+{% endblock scripts %}

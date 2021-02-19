@@ -48,3 +48,13 @@ class Cart(db.Model):
     def __repr__(self):
         from app.blueprints.auth.models import User
         return f'<Cart: {User.query.get(self.user_id).email}: {Product.query.get(self.product_id).name}>'
+
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    user_id = db.Column(db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.ForeignKey('product.id'), nullable=False)
+    date_filled = db.Column(db.DateTime, default=dt.utcnow)
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()

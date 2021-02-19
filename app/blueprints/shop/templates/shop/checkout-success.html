@@ -1,0 +1,20 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+  {{ super() }} | Checkout Confirmation
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('shop.static', filename='css/shop.css') }}">
+{% endblock %}
+
+{% block body %}
+    <h3>Checkout Confirmation</h3>
+    <hr />
+
+    <p><strong>Order No</strong>: {{ checkout_session['id'] }}</p>
+    <p><strong>Cx Name</strong>: {{ checkout_session['customer'] }}</p>
+    <p><strong>Cx Email</strong>: {{ checkout_session['customer_email'] }}</p>
+    <p><strong>Total</strong>: {{ '${:.2f}'.format(checkout_session['amount_total']/100) }}</p>
+{% endblock %}

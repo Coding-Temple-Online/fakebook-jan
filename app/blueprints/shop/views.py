@@ -1,9 +1,12 @@
 from .import bp as shop_bp
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app as app, jsonify, session
 from app.blueprints.shop.models import Product, Cart
 from flask_login import current_user
 from app import db
 from app.context_processors import build_cart
+import stripe, os
+
+stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
 
 # [<Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>]
@@ -49,10 +52,48 @@ def delete_product():
     flash(f'Product deleted', 'info')
     return redirect(url_for('shop.cart'))
 
-@shop_bp.route('/checkout')
+@shop_bp.route('/checkout/charge', methods=['GET', 'POST'])
 def checkout():
-    context = {}
-    return render_template('shop/checkout.html', **context)
+    display_cart = build_cart()   
+    items = []
+    for item in display_cart.values():
+        new_dict = {
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                        'name': item['name'],
+                        },
+                        'unit_amount': int(item['price'] * 100),
+                    },
+                    'quantity': item['quantity'],
+                }
+        items.append(new_dict)
+
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=items,
+        customer_email=current_user.email,
+        mode='payment',
+        success_url='http://localhost:5000/shop/cart/checkout/success',
+        cancel_url='http://localhost:5000/shop/cart'
+    )
+    context = {
+        'checkout_session': checkout_session,
+        'stripe_pk_test': app.config.get('STRIPE_TEST_KEY')
+    }
+    session['checkout_session'] = checkout_session
+    flash('Your payment was successful.', 'success')
+    return redirect(url_for('shop.checkout_success'))
+
+@shop_bp.route('/cart/checkout/success')
+def checkout_success():
+    context = {
+        'checkout_session': session.get('checkout_session')
+    }
+    # At some point, add more functionality
+    [db.session.delete(i) for i in Cart.query.filter_by(user_id=current_user.id).all()]
+    db.session.commit()
+    return render_template('shop/checkout-success.html', **context)
 
 @shop_bp.route('/cart/update')
 def update_cart():

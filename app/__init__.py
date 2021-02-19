@@ -46,8 +46,10 @@ def create_app(config_class=Config):
     with app.app_context():
         from app.blueprints.main import email
         from .import context_processors
+
         from app.blueprints.shop import bp as shop_bp
         app.register_blueprint(shop_bp)
 
+        from app.context_processors import build_cart
         
     return app
