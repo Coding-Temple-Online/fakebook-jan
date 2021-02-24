@@ -25,7 +25,7 @@
       // Create an instance of the Stripe object with your publishable API key
       var pk_test = '{{ stripe_pk_test }}';
       var stripe = Stripe(pk_test);
-      console.log(stripe);
+      // console.log(stripe);
 
       $('#checkout_form').on('submit', function() {
         fetch('{{ url_for("shop.checkout") }}', {

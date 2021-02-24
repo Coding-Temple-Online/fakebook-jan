@@ -22,6 +22,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String)
     email = db.Column(db.String, unique=True)
     password = db.Column(db.String)
+    is_stripe_customer = db.Column(db.Boolean)
     posts = db.relationship('Post', cascade='all, delete-orphan', backref='user', lazy=True)
     followed = db.relationship(
         'User', secondary=followers,
@@ -38,6 +39,10 @@ class User(UserMixin, db.Model):
         self.last_name = last_name
         self.password = password
         self.email = f'{self.first_name}{self.last_name[0]}@codingtemple.com'.lower()
+
+
+    def make_stripe_customer(self):
+        pass
 
     def followed_posts(self):
         followed = Post.query.join(

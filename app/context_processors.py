@@ -3,29 +3,10 @@ from flask_login import current_user
 from app.blueprints.shop.models import Cart, Product
 from functools import reduce
 
-def build_cart():
-    cart_list = {}
-    cart = Cart.query.filter_by(user_id=current_user.id).all()
-    if len(cart) > 0:
-        for i in cart:
-            p = Product.query.get(i.product_id)
-            if i.product_id not in cart_list.keys():
-                cart_list[p.id] = {
-                    'id': i.id,
-                    'product_id': p.id,
-                    'quantity': 1,
-                    'name': p.name,
-                    'description': p.description,
-                    'price': p.price,
-                    'tax': p.tax
-                }
-            else:
-                cart_list[p.id]['quantity'] += 1
-    return cart_list
 
 @app.context_processor
 def display_cart_info():
-    if not current_user.is_authenticated:
+    if not current_user.is_authenticated or current_user is None or not current_user.cart:
         return {
                 'cart': {
                     'items': [],
@@ -36,10 +17,10 @@ def display_cart_info():
                 } 
             }
     else:
+        from app.stripe.session import Session
+        
         cart = Cart.query.filter_by(user_id=current_user.id).all()
-        if cart is None:
-            cart = []
-        cart_list = build_cart()
+        cart_list = Session.build_cart(cart)
         return {
                 'cart': {
                     'items': cart,
