@@ -1,11 +1,14 @@
 from .import bp as shop_bp
 from flask import render_template, redirect, url_for, flash, request, current_app as app, jsonify, session
 from app.blueprints.shop.models import Product, Cart
+from app.blueprints.auth.models import User
 from flask_login import current_user, login_required
 from app import db
-from app import stripe as my_stripe
+from app.stripe import stripe_key
 from app.stripe.session import Session
-import os
+import os, stripe
+
+stripe.api_key = stripe_key['secret_key']
 
 # [<Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Dingy Brown T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>, <Cart: derekh@codingtemple.com: Black T-Shirt>]
 def find_product(product_to_find, a_cart):
@@ -54,18 +57,57 @@ def delete_product():
     flash(f'Product deleted', 'info')
     return redirect(url_for('shop.cart'))
 
+# @login_required
+# @shop_bp.route('/checkout', methods=['GET', 'POST'])
+# def checkout():
+#     checkout_session = Session.create_session()
+#     session['checkout_session_id'] = checkout_session.id
+#     flash('Your payment was successful.', 'success')
+#     return redirect(url_for('shop.checkout_success'))
+
 @login_required
 @shop_bp.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    checkout_session = Session.create_session()
-    session['checkout_session_id'] = checkout_session.id
-    flash('Your payment was successful.', 'success')
-    return redirect(url_for('shop.checkout_success'))
+    react_cart = request.json['items']
+    line_items = []
+    for p in react_cart:
+        p_info = {
+            'price_data': {
+                'currency': 'usd',
+                'unit_amount': int(p['product']['price']*100),
+                'product_data': {
+                    'name': p['product']['name'],
+                    'images': ['https://placehold.it/50x50'],
+                },
+            },
+            'quantity': p['quantity'],
+        }
+        line_items.append(p_info)
+
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=line_items,
+        mode='payment',
+        success_url='http://localhost:3000' + '?success=true',
+        cancel_url='http://localhost:3000' + '?canceled=true',
+    )
+    return jsonify({ 'id': checkout_session.id })
 
 @login_required
 @shop_bp.route('/cart/checkout/success')
 def checkout_success():
     checkout_session = Session.get_session(session.get('checkout_session_id'))
+    
+    # Create Stripe customer if customer doesn't exist
+    if not current_user.is_stripe_customer:
+        c = stripe.Customer.create(email=current_user.email)
+        User.query.get(current_user.id).is_stripe_customer = True
+        db.session.commit()
+
+    customer = stripe.Customer.retrieve(c.id)
+    print(customer)
+    print("="*50)
+    print("="*50)
     print(checkout_session)
 
     # customer = stripe.Customer.retrieve(session.customer)

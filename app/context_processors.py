@@ -5,6 +5,12 @@ from functools import reduce
 
 
 @app.context_processor
+def get_cart_stuff():
+    return {
+        'stripeKey': app.config.get('STRIPE_TEST_KEY')
+    }
+
+@app.context_processor
 def display_cart_info():
     if not current_user.is_authenticated or current_user is None or not current_user.cart:
         return {

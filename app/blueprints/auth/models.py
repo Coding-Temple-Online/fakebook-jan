@@ -22,7 +22,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String)
     email = db.Column(db.String, unique=True)
     password = db.Column(db.String)
-    is_stripe_customer = db.Column(db.Boolean)
+    is_stripe_customer = db.Column(db.Boolean, default=False)
     posts = db.relationship('Post', cascade='all, delete-orphan', backref='user', lazy=True)
     followed = db.relationship(
         'User', secondary=followers,

@@ -13,7 +13,7 @@
     <h3>Checkout</h3>
     <hr />
     <form id='checkout_form'>
-      <input type="submit" class="btn btn-primary" value='Pay' />
+      <input id="checkout" type="submit" class="btn btn-primary" value='Pay' />
     </form>
 {% endblock %}
 
@@ -27,7 +27,8 @@
       var stripe = Stripe(pk_test);
       // console.log(stripe);
 
-      $('#checkout_form').on('submit', function() {
+      $('#checkout_form').on('submit', function(e) {
+        e.preventDefault();
         fetch('{{ url_for("shop.checkout") }}', {
           method: 'POST'
         })
@@ -35,7 +36,7 @@
           return response.json();
         })
         .then(function(session) {
-          return stripe.redirectToCheckout({ session_id: session.id })
+          stripe.redirectToCheckout({ session_id: session.id })
         })
         .then(function(result) {
           console.log(result);
